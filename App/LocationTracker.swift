@@ -44,6 +44,20 @@ final class LocationTracker: NSObject, ObservableObject, @preconcurrency CLLocat
         }
     }
 
+    func becameActive() {
+        refreshStatus()
+        completePendingStart()
+    }
+
+    private func completePendingStart() {
+        // The permission delegate can run before iOS dismisses its permission
+        // dialog. Keep the intent until the app is active again.
+        guard let intent = pendingIntent, canRecord,
+              UIApplication.shared.applicationState == .active else { return }
+        pendingIntent = nil
+        begin(intent)
+    }
+
     private var canRecord: Bool {
         authorization == .authorizedAlways || authorization == .authorizedWhenInUse
     }
@@ -100,10 +114,8 @@ final class LocationTracker: NSObject, ObservableObject, @preconcurrency CLLocat
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         refreshStatus()
-        if let intent = pendingIntent, canRecord {
-            pendingIntent = nil
-            begin(intent)
-        } else if authorization == .denied || authorization == .restricted {
+        completePendingStart()
+        if authorization == .denied || authorization == .restricted {
             pendingIntent = nil
             message = "Location access is off. Enable it in iPhone Settings to record trips."
         }

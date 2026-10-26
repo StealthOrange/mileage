@@ -28,6 +28,7 @@ struct TripHistoryView: View {
         }
         .background(Color.mileageBackground)
         .navigationTitle("Trip history")
+        .toolbar(.visible, for: .navigationBar)
         .searchable(text: $query, prompt: "Search purpose or notes")
     }
 }

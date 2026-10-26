@@ -17,7 +17,7 @@ A free Personal Team can be used for development subject to Apple's signing and 
 1. Enroll in the [Apple Developer Program](https://developer.apple.com/programs/enroll/). Apple's standard annual fee is USD $99, subject to local currency and eligibility terms.
 2. Register your bundle ID and create an iOS app record named Mileage in App Store Connect. Match the project's bundle identifier. You must own a suitable name/identifier; the placeholder does not reserve either.
 3. Select your signing team in Xcode. Verify Background Modes → Location updates remains enabled.
-4. Select a generic iOS device, then Product → Archive. Validate and distribute the archive to App Store Connect from Xcode's Organizer.
+4. Use Xcode 26 or later with an iOS 26 or later SDK for App Store Connect uploads (Apple's minimum since April 28, 2026). Select a generic iOS device, then Product → Archive. Validate and distribute the archive from Xcode's Organizer.
 5. After processing, complete export-compliance and beta information. Add yourself as an internal tester with the appropriate App Store Connect role and install using Apple's TestFlight app. If testing externally, Apple's beta review requirements apply.
 6. Run the physical-device checklist. No public App Store launch is required.
 
@@ -27,4 +27,4 @@ The GitHub Actions workflow builds an **unsigned simulator app** and runs tests.
 
 Do not share Apple passwords, private signing keys, certificates, or provisioning profiles in chat, issues, commits, or pull requests. Configure future automated signing through the build platform's private credential storage.
 
-References: [Apple distribution overview](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases), [TestFlight overview](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview/), [build expiry](https://testflight.apple.com/).
+References: [Apple distribution overview](https://developer.apple.com/documentation/xcode/distributing-your-app-for-beta-testing-and-releases), [minimum upload SDK](https://developer.apple.com/news/upcoming-requirements/?id=04282026a), [TestFlight overview](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview/), [build expiry](https://testflight.apple.com/).

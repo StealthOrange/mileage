@@ -66,6 +66,7 @@ struct TripDetailView: View {
         }
         .background(Color.mileageBackground)
         .navigationTitle("Trip details").navigationBarTitleDisplayMode(.inline)
+        .toolbar(.visible, for: .navigationBar)
         .sheet(item: $editTrip) { TripEditView(trip: $0) }
         .confirmationDialog("Delete this trip permanently?", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("Delete trip", role: .destructive) { if store.delete(tripID) { dismiss() } }

@@ -20,7 +20,7 @@ struct MileageApp: App {
                 .tint(.mileageGreen)
                 .preferredColorScheme(.dark)
                 .onChange(of: scenePhase) { _, phase in
-                    if phase == .active { tracker.refreshStatus() }
+                    if phase == .active { tracker.becameActive() }
                 }
         }
     }
