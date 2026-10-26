@@ -1,0 +1,55 @@
+name: iOS build and tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check project source membership
+        run: python3 scripts/generate_project.py --check
+      - name: Test mileage, persistence, and exports
+        run: swift test
+      - name: Build the iPhone app without signing
+        run: |
+          set -o pipefail
+          xcodebuild build -project Mileage.xcodeproj -scheme Mileage \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO | tee /tmp/mileage-build.log
+      - name: Launch in iPhone simulator and capture dashboard
+        run: |
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; ds=json.load(sys.stdin)["devices"]; print(next(d["udid"] for group in ds.values() for d in group if "iPhone" in d["name"]))')
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" build/Build/Products/Debug-iphonesimulator/Mileage.app
+          xcrun simctl launch "$DEVICE" com.stealthorange.mileage
+          sleep 3
+          xcrun simctl io "$DEVICE" screenshot build/Mileage-dashboard.png
+      - name: Upload simulator app and screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mileage-simulator
+          path: |
+            build/Mileage-dashboard.png
+            build/Build/Products/Debug-iphonesimulator/Mileage.app
+          retention-days: 7
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mileage-build-log
+          path: /tmp/mileage-build.log
+          if-no-files-found: ignore
+          retention-days: 7
