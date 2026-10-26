@@ -50,6 +50,7 @@ public final class TripRepository {
                   trip.gpsDistanceMeters.isFinite && trip.gpsDistanceMeters >= 0 &&
                   (trip.adjustedMiles.map { $0.isFinite && $0 >= 0 } ?? true) &&
                   (trip.endedAt.map { $0 >= trip.startedAt } ?? true) &&
+                  (trip.lastReliableFix.map(\.isValid) ?? true) &&
                   trip.samples.allSatisfy(\.isValid)
               }) else { throw RepositoryError.invalidTrips }
     }

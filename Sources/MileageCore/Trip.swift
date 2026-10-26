@@ -49,6 +49,7 @@ public struct Trip: Codable, Identifiable, Equatable {
     public var purpose: String
     public var notes = ""
     public var samples: [LocationSample] = []
+    public var lastReliableFix: LocationSample?
     public var gpsDistanceMeters: Double = 0
     public var adjustedMiles: Double?
     public var adjustmentReason = ""
@@ -81,7 +82,7 @@ public struct Trip: Codable, Identifiable, Equatable {
         guard isActive else { return }
         endedAt = max(date, max(samples.last?.timestamp ?? startedAt, startedAt))
         if samples.count < 2 { interrupt(.insufficientGPS, at: endedAt!) }
-        else if endedAt!.timeIntervalSince(lastFixAt ?? samples.last!.timestamp) > 60 {
+        else if endedAt!.timeIntervalSince(lastFixAt ?? lastReliableFix?.timestamp ?? samples.last!.timestamp) > 60 {
             interrupt(.gpsGap, at: endedAt!)
         }
     }

@@ -21,7 +21,7 @@ final class LocationTracker: NSObject, ObservableObject, @preconcurrency CLLocat
         // Created on the main actor; Core Location delivers delegates on this run loop.
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.distanceFilter = 5
+        manager.distanceFilter = kCLDistanceFilterNone
         manager.activityType = .automotiveNavigation
         manager.pausesLocationUpdatesAutomatically = false
         manager.showsBackgroundLocationIndicator = true
@@ -116,15 +116,13 @@ final class LocationTracker: NSObject, ObservableObject, @preconcurrency CLLocat
             LocationSample(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude,
                            accuracy: $0.horizontalAccuracy, timestamp: $0.timestamp)
         }
-        if let fresh = samples.filter({ $0.isValid && $0.timestamp >= (store.activeTrip?.startedAt ?? now) })
-            .max(by: { $0.timestamp < $1.timestamp }) {
-            lastFixAt = max(lastFixAt ?? fresh.timestamp, fresh.timestamp)
-            message = nil
-        }
         if !store.append(samples) {
             stopHardware()
             _ = store.interrupt(.storageFailure)
             message = store.storageError ?? "Recording stopped. Resume when storage is available."
+        } else if let fresh = store.activeTrip?.lastReliableFix {
+            lastFixAt = fresh.timestamp
+            message = nil
         }
     }
 

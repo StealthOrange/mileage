@@ -6,25 +6,33 @@ public enum RouteRecorder {
     @discardableResult
     public static func append(_ raw: LocationSample, to trip: inout Trip) -> Bool {
         guard trip.isActive, raw.isValid, raw.timestamp >= trip.startedAt else { return false }
+        if let observed = trip.lastReliableFix, raw.timestamp <= observed.timestamp { return false }
         var sample = raw
         guard let previous = trip.samples.last else {
             trip.samples.append(sample)
+            trip.lastReliableFix = sample
             trip.needsNewSegment = false
             return true
         }
         let seconds = sample.timestamp.timeIntervalSince(previous.timestamp)
         guard seconds > 0 else { return false }
-        if trip.needsNewSegment || seconds > 60 {
+        let observed = trip.lastReliableFix ?? previous
+        let observationGap = sample.timestamp.timeIntervalSince(observed.timestamp)
+        if trip.needsNewSegment || observationGap > 60 {
             if !trip.needsNewSegment { trip.interrupt(.gpsGap, at: sample.timestamp) }
             trip.samples.append(sample)
+            trip.lastReliableFix = sample
             trip.needsNewSegment = false
             return true
         }
         let meters = distance(previous, sample)
         // 70 m/s is roughly 157 mph; no clipping or invented replacement miles.
-        guard meters / seconds <= 70 else { return false }
+        guard observationGap > 0, distance(observed, sample) / observationGap <= 70 else { return false }
         let jitterFloor = max(10, min(30, max(previous.accuracy, sample.accuracy) * 0.75))
-        guard meters >= jitterFloor else { return false }
+        // Keep a heartbeat independently of the measured route. A red light
+        // must not become a GPS outage just because jitter was filtered out.
+        trip.lastReliableFix = sample
+        guard meters >= jitterFloor else { return true }
         sample.connectsToPrevious = true
         trip.samples.append(sample)
         trip.gpsDistanceMeters += meters

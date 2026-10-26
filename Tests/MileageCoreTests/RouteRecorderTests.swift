@@ -42,6 +42,26 @@ final class RouteRecorderTests: XCTestCase {
         XCTAssertEqual(trip.samples.count, 1)
     }
 
+    func testTrafficLightHeartbeatDoesNotCreateAGapOrCountJitter() {
+        var trip = Trip(startedAt: start, category: .business)
+        RouteRecorder.append(point(), to: &trip)
+        for second in 1...180 {
+            RouteRecorder.append(point(29.76041, seconds: Double(second)), to: &trip)
+        }
+        RouteRecorder.append(point(29.7614, seconds: 190), to: &trip)
+        XCTAssertEqual(trip.samples.count, 2)
+        XCTAssertEqual(trip.gpsDistanceMeters, 111.195, accuracy: 0.01)
+        XCTAssertFalse(trip.needsReview)
+    }
+
+    func testHeartbeatRejectsReplayedFixAfterStationaryUpdates() {
+        var trip = Trip(startedAt: start, category: .business)
+        RouteRecorder.append(point(), to: &trip)
+        RouteRecorder.append(point(seconds: 50), to: &trip)
+        XCTAssertFalse(RouteRecorder.append(point(29.7614, seconds: 40), to: &trip))
+        XCTAssertEqual(trip.miles, 0)
+    }
+
     func testRejectsTeleportWithoutPoisoningAnchor() {
         var trip = Trip(startedAt: start, category: .business)
         RouteRecorder.append(point(), to: &trip)
