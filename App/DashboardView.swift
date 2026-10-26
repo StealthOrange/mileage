@@ -66,7 +66,7 @@ struct DashboardView: View {
     private var header: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 5) {
-                Text("YOUR MILES, ACCOUNTED FOR.").font(.caption2.weight(.semibold)).tracking(2).foregroundStyle(.mileageGreen)
+                Text("YOUR MILES, ACCOUNTED FOR.").font(.caption2.weight(.semibold)).tracking(2).foregroundStyle(Color.mileageGreen)
                 Text("Mileage").font(.system(size: 38, weight: .bold, design: .rounded))
             }
             Spacer()
@@ -81,7 +81,7 @@ struct DashboardView: View {
     private var startCard: some View {
         MileageCard {
             HStack {
-                Image(systemName: "location.north.circle.fill").foregroundStyle(.mileageGreen).font(.title)
+                Image(systemName: "location.north.circle.fill").foregroundStyle(Color.mileageGreen).font(.title)
                 Spacer()
                 Text("READY WHEN YOU ARE").font(.caption2.weight(.semibold)).tracking(1).foregroundStyle(.secondary)
             }
@@ -149,7 +149,7 @@ struct DashboardView: View {
             HStack {
                 Text(Date(), format: .dateTime.month(.wide).year()).font(.subheadline.weight(.medium)).foregroundStyle(.secondary)
                 Spacer()
-                Image(systemName: "chart.bar.xaxis").foregroundStyle(.mileageGreen)
+                Image(systemName: "chart.bar.xaxis").foregroundStyle(Color.mileageGreen)
             }
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 5) {
@@ -183,7 +183,7 @@ struct TripRow: View {
     var body: some View {
         HStack(spacing: 14) {
             Image(systemName: trip.category == .business ? "briefcase.fill" : "car.fill")
-                .foregroundStyle(.mileageGreen).frame(width: 42, height: 42)
+                .foregroundStyle(Color.mileageGreen).frame(width: 42, height: 42)
                 .background(Color.mileageGreen.opacity(0.12), in: RoundedRectangle(cornerRadius: 13))
             VStack(alignment: .leading, spacing: 5) {
                 Text(trip.purpose.isEmpty ? "\(trip.category.rawValue) trip" : trip.purpose).font(.subheadline.weight(.semibold)).lineLimit(1)

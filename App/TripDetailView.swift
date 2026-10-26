@@ -26,7 +26,7 @@ struct TripDetailView: View {
                                 Text("miles").foregroundStyle(.secondary)
                             }
                             Label(trip.category.rawValue, systemImage: trip.category == .business ? "briefcase" : "car")
-                                .foregroundStyle(.mileageGreen)
+                                .foregroundStyle(Color.mileageGreen)
                             Text(trip.purpose.isEmpty ? "No purpose added" : trip.purpose).font(.headline)
                             LabeledContent("Started", value: trip.startedAt.formatted(date: .abbreviated, time: .shortened))
                             if let end = trip.endedAt {

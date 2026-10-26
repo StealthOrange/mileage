@@ -3,7 +3,7 @@ import UIKit
 import Combine
 
 @MainActor
-final class LocationTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
+final class LocationTracker: NSObject, ObservableObject, @preconcurrency CLLocationManagerDelegate {
     @Published private(set) var isRecording = false
     @Published private(set) var authorization: CLAuthorizationStatus = .notDetermined
     @Published private(set) var hasPreciseLocation = false
@@ -18,6 +18,7 @@ final class LocationTracker: NSObject, ObservableObject, CLLocationManagerDelega
     init(store: MileageStore) {
         self.store = store
         super.init()
+        // Created on the main actor; Core Location delivers delegates on this run loop.
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
         manager.distanceFilter = 5
