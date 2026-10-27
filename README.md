@@ -17,6 +17,8 @@ A personal iPhone mileage tracker with **Start/Stop recording that can continue 
 
 ## Run
 
+For an interactive browser demonstration without Xcode, see [the browser preview](preview/README.md). It uses simulated trips; actual background GPS still requires the native iPhone app.
+
 Open `Mileage.xcodeproj` in a current Xcode, select the `Mileage` scheme and an iPhone Simulator, then Run. For your actual phone, configure your Apple signing team and bundle identifier. See [installation and TestFlight instructions](docs/INSTALL.md).
 
 ```sh
