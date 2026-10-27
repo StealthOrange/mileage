@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" data-theme="system" data-appearance-key="mileage-preview-appearance">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080D10">
+  <meta name="description" content="A private browser preview of Mileage. All GPS routes are simulated.">
+  <title>Mileage · Instrument preview</title>
+  <script>
+    try {
+      const root = document.documentElement;
+      const appearance = localStorage.getItem(root.dataset.appearanceKey);
+      if (['system', 'light', 'dark'].includes(appearance)) root.dataset.theme = appearance;
+    } catch (_) {}
+  </script>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="map.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="preview-toolbar">
+    <p>Browser preview <span aria-hidden="true">·</span> Simulated GPS</p>
+    <div class="preview-actions">
+      <button class="preview-link" data-action="samples">Load sample trips</button>
+      <label class="preview-appearance"><span class="sr-only">Appearance</span><select data-appearance-select aria-label="Appearance"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+    </div>
+  </div>
+  <main class="app-shell" aria-label="Mileage app preview">
+    <div class="screen" id="screen"><div id="app"></div></div>
+    <nav class="bottom-nav" id="navigation" aria-label="Main navigation"></nav>
+  </main>
+  <dialog class="sheet" id="sheet" aria-labelledby="sheet-title"></dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>
