@@ -4,6 +4,8 @@ The repository contains source code. It is not an installable website or signed 
 
 ## Development install with a Mac
 
+For the free personal option, install Xcode from the Mac App Store, open it, and complete first-launch setup. Review and accept Apple's license yourself. Sign in under **Xcode → Settings → Apple Accounts**; an existing account may already offer a **Personal Team**. Use that team for personal testing. Paid enrollment is not required for this route.
+
 1. Clone/download this repository and open `Mileage.xcodeproj` in Xcode.
 2. Under Mileage → Signing & Capabilities, select your Apple development team. Replace `com.stealthorange.mileage` with an available bundle ID owned by your team if necessary.
 3. Connect and trust your iPhone, enable Developer Mode if Xcode requests it, select the phone, and Run.
@@ -11,6 +13,19 @@ The repository contains source code. It is not an installable website or signed 
 5. Complete [the device checklist](DEVICE_TESTS.md) before relying on your records.
 
 A free Personal Team can be used for development subject to Apple's signing and capability limits and periodic reinstallation. A paid Developer Program membership is the practical route to TestFlight. This project does not contain a signing team or certificates.
+
+Free Personal Team provisioning expires **7 days** after issuance. Rebuild and install again from Xcode when it expires. Keep the same team and bundle identifier, and update the existing installation rather than deleting Mileage to preserve its local trip records. Apple's current rules are documented in [Developer account overview](https://developer.apple.com/help/account/basics/about-your-developer-account).
+
+### If your phone does not appear
+
+- Use a USB cable that supports data, unlock the iPhone, and leave it unlocked during pairing.
+- Allow the accessory if macOS asks. Tap **Trust** on the iPhone and enter its passcode on the phone.
+- In Finder, select the iPhone under **Locations** and click **Trust** if needed. If Finder cannot see it, try another cable or port.
+- In Xcode, open the device destination menu or **Window → Device Hub** (older versions: **Devices and Simulators**) and wait for pairing/device preparation.
+- If prompted, enable **Settings → Privacy & Security → Developer Mode** on the iPhone, restart it, and confirm the setting after restart. Xcode may require an additional trusted-device confirmation.
+- An iOS Simulator runtime is only needed for simulator testing. It is not a replacement for connecting your physical iPhone.
+
+If a Swift test build inside an iCloud-synced Documents folder reports `resource fork, Finder information, or similar detritus not allowed`, place generated test artifacts outside iCloud, for example `swift test --scratch-path /private/tmp/mileage-swift-tests`. Xcode's default Derived Data location is outside the repository; keep it there for signed device builds.
 
 ## Private beta through TestFlight
 

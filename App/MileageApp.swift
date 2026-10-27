@@ -4,6 +4,7 @@ import SwiftUI
 struct MileageApp: App {
     @StateObject private var store: MileageStore
     @StateObject private var tracker: LocationTracker
+    @AppStorage("mileageAppearance") private var appearance = MileageAppearance.system.rawValue
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -18,7 +19,8 @@ struct MileageApp: App {
                 .environmentObject(store)
                 .environmentObject(tracker)
                 .tint(.mileageGreen)
-                .preferredColorScheme(.dark)
+                .foregroundStyle(Color.mileagePrimary)
+                .preferredColorScheme((MileageAppearance(rawValue: appearance) ?? .system).colorScheme)
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .active { tracker.becameActive() }
                 }

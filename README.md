@@ -38,6 +38,14 @@ Do not swipe Mileage away during a trip. Force-quitting, rebooting, permission c
 
 **Automatic drive detection is not included.** It needs additional native lifecycle/detection work and real-device battery and false-positive testing. This first release uses manual Start/Stop with native background GPS.
 
+## Design system
+
+Mileage supports System, Light, and Dark appearance in Settings. Native screens share adaptive colors, typography, spacing, buttons, cards, and warning styles through `App/Theme.swift`. The browser preview uses `preview/styles.css` as its global stylesheet. Both platforms consume [shared design tokens](design/README.md), generated from `design/tokens.json` so palette and sizing changes stay consistent.
+
+```sh
+python3 scripts/generate_design_tokens.py --check
+```
+
 ## Storage and privacy
 
 Trip data is stored in the app's Application Support directory. No route samples are sent to a Mileage server. Apple Maps and your device backup settings still apply. Export backups regularly: deleting the app deletes its local records. CSV includes completed trips and start/end coordinates; JSON includes full routes and any active trip. Backup import/restore is not implemented yet. See [privacy](docs/PRIVACY.md).

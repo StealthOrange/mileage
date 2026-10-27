@@ -7,6 +7,7 @@ struct TripDetailView: View {
     var tripID: UUID
     @State private var editTrip: Trip?
     @State private var confirmDelete = false
+    @ScaledMetric(relativeTo: .largeTitle) private var mileageSize: CGFloat = MileageTokens.Typography.detailMetric
 
     private var trip: Trip? { store.trips.first { $0.id == tripID } }
 
@@ -14,58 +15,103 @@ struct TripDetailView: View {
         Group {
             if let trip {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: MileageTokens.Space.xl) {
                         if trip.samples.isEmpty {
                             ContentUnavailableView("No GPS route recorded", systemImage: "map",
                                                    description: Text("You can enter a verified mileage correction below."))
-                        } else { RouteMap(trip: trip).frame(height: 260).clipShape(RoundedRectangle(cornerRadius: 24)) }
+                            .padding(.vertical, MileageTokens.Space.lg)
+                        } else {
+                            RouteMap(trip: trip)
+                                .frame(height: 240)
+                                .clipShape(RoundedRectangle(cornerRadius: MileageTokens.Radius.card))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: MileageTokens.Radius.card)
+                                        .strokeBorder(Color.mileageSeparator, lineWidth: 1)
+                                }
+                        }
                         MileageCard {
+                            Label(trip.category.rawValue, systemImage: trip.category == .business ? "briefcase" : "car")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(Color.mileageGreen)
                             HStack(alignment: .firstTextBaseline) {
                                 Text(trip.miles, format: .number.precision(.fractionLength(2)))
-                                    .font(.system(size: 48, weight: .semibold, design: .rounded)).monospacedDigit()
-                                Text("miles").foregroundStyle(.secondary)
+                                    .font(.system(size: mileageSize, weight: .semibold)).monospacedDigit()
+                                    .minimumScaleFactor(0.6)
+                                Text("miles")
+                                    .font(.subheadline)
+                                    .foregroundStyle(Color.mileageSecondary)
                             }
-                            Label(trip.category.rawValue, systemImage: trip.category == .business ? "briefcase" : "car")
-                                .foregroundStyle(Color.mileageGreen)
-                            Text(trip.purpose.isEmpty ? "No purpose added" : trip.purpose).font(.headline)
-                            LabeledContent("Started", value: trip.startedAt.formatted(date: .abbreviated, time: .shortened))
-                            if let end = trip.endedAt {
-                                LabeledContent("Ended", value: end.formatted(date: .abbreviated, time: .shortened))
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("\(trip.miles.formatted(.number.precision(.fractionLength(2)))) miles")
+                            Text(trip.purpose.isEmpty ? "\(trip.category.rawValue) trip" : trip.purpose)
+                                .font(.headline)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Divider().overlay(Color.mileageSeparator)
+                            VStack(spacing: MileageTokens.Space.md) {
+                                LabeledContent("Started", value: trip.startedAt.formatted(date: .abbreviated, time: .shortened))
+                                if let end = trip.endedAt {
+                                    LabeledContent("Ended", value: end.formatted(date: .abbreviated, time: .shortened))
+                                }
+                                if trip.adjustedMiles != nil {
+                                    LabeledContent("Original GPS miles", value: trip.gpsMiles.formatted(.number.precision(.fractionLength(2))))
+                                }
                             }
+                            .font(.subheadline)
                             if trip.adjustedMiles != nil {
-                                LabeledContent("GPS miles", value: trip.gpsMiles.formatted(.number.precision(.fractionLength(2))))
-                                Text("Correction: \(trip.adjustmentReason)").font(.subheadline).foregroundStyle(.secondary)
+                                Label("Mileage corrected", systemImage: "checkmark.circle")
+                                    .font(.caption.weight(.medium))
+                                    .foregroundStyle(Color.mileageGreen)
+                                Text(trip.adjustmentReason)
+                                    .font(.subheadline)
+                                    .foregroundStyle(Color.mileageSecondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
-                            if !trip.notes.isEmpty { Text(trip.notes).font(.subheadline) }
+                            if !trip.notes.isEmpty {
+                                Divider().overlay(Color.mileageSeparator)
+                                Text("Notes").font(.subheadline.weight(.semibold))
+                                Text(trip.notes)
+                                    .font(.subheadline)
+                                    .foregroundStyle(Color.mileageSecondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                         if !trip.issues.isEmpty {
                             MileageCard {
                                 Label(trip.needsReview ? "Review this trip" : "Reviewed trip",
                                       systemImage: trip.needsReview ? "exclamationmark.triangle" : "checkmark.seal")
-                                    .foregroundStyle(trip.needsReview ? Color.orange : Color.mileageGreen).font(.headline)
+                                    .foregroundStyle(trip.needsReview ? Color.mileageWarning : Color.mileageGreen).font(.headline)
                                 Text("Missing sections are excluded from GPS mileage. Compare with your odometer or another record before using this total.")
-                                    .font(.subheadline).foregroundStyle(.secondary)
+                                    .font(.subheadline).foregroundStyle(Color.mileageSecondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                                 ForEach(trip.issues) { issue in
                                     HStack(alignment: .top) {
                                         Text(issue.reason.rawValue)
                                         Spacer()
-                                        Text(issue.date, format: .dateTime.hour().minute()).foregroundStyle(.secondary)
+                                        Text(issue.date, format: .dateTime.hour().minute()).foregroundStyle(Color.mileageSecondary)
                                     }.font(.caption)
                                 }
                             }
                         }
                         if let error = store.storageError { IssueBanner(text: error) }
-                        Button("Edit details or correct mileage") { editTrip = trip }
-                            .buttonStyle(.borderedProminent).foregroundStyle(.black).frame(maxWidth: .infinity)
+                        Button { editTrip = trip } label: {
+                            Label("Edit trip", systemImage: "pencil")
+                        }
+                            .buttonStyle(MileagePrimaryButtonStyle())
+                            .accessibilityHint("Change purpose, notes, category, or enter a verified mileage correction")
                             .disabled(store.isReadOnly || trip.isActive)
                         Button("Delete trip", role: .destructive) { confirmDelete = true }
-                            .frame(maxWidth: .infinity).padding(.vertical, 8).disabled(store.isReadOnly || trip.isActive)
-                    }.padding(20)
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Color.mileageDanger)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .disabled(store.isReadOnly || trip.isActive)
+                    }.padding(MileageTokens.Space.xl)
                 }
             } else { ContentUnavailableView("Trip not found", systemImage: "car") }
         }
         .background(Color.mileageBackground)
+        .foregroundStyle(Color.mileagePrimary)
         .navigationTitle("Trip details").navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color.mileageBackground, for: .navigationBar)
         .toolbar(.visible, for: .navigationBar)
         .sheet(item: $editTrip) { TripEditView(trip: $0) }
         .confirmationDialog("Delete this trip permanently?", isPresented: $confirmDelete, titleVisibility: .visible) {
@@ -81,14 +127,14 @@ private struct RouteMap: View {
             ForEach(Array(trip.routeSegments.enumerated()), id: \.offset) { _, segment in
                 if segment.count > 1 {
                     MapPolyline(coordinates: segment.map { CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude) })
-                        .stroke(.green, lineWidth: 5)
+                        .stroke(Color.mileageGreen, lineWidth: 5)
                 }
             }
             if let first = trip.samples.first {
-                Marker("Start", systemImage: "flag.fill", coordinate: CLLocationCoordinate2D(latitude: first.latitude, longitude: first.longitude)).tint(.green)
+                Marker("Start", systemImage: "flag.fill", coordinate: CLLocationCoordinate2D(latitude: first.latitude, longitude: first.longitude)).tint(Color.mileageGreen)
             }
             if let last = trip.samples.last {
-                Marker("End", systemImage: "flag.checkered", coordinate: CLLocationCoordinate2D(latitude: last.latitude, longitude: last.longitude)).tint(.orange)
+                Marker("End", systemImage: "flag.checkered", coordinate: CLLocationCoordinate2D(latitude: last.latitude, longitude: last.longitude)).tint(Color.mileageWarning)
             }
         }
         .mapControls { MapCompass(); MapScaleView() }
@@ -103,6 +149,7 @@ struct TripEditView: View {
     @State private var useCorrection = false
     @State private var milesText = ""
     @State private var error: String?
+    @AppStorage("mileageAppearance") private var appearance = MileageAppearance.system.rawValue
 
     private var correctedMiles: Double? {
         let formatter = NumberFormatter()
@@ -126,8 +173,10 @@ struct TripEditView: View {
                         ForEach(TripCategory.allCases) { Text($0.rawValue).tag($0) }
                     }
                     TextField("Purpose", text: $trip.purpose)
+                        .textInputAutocapitalization(.sentences)
                     TextField("Notes", text: $trip.notes, axis: .vertical).lineLimit(3...6)
                 }
+                .listRowBackground(Color.mileageCard)
                 Section {
                     Toggle("Use a verified mileage correction", isOn: $useCorrection)
                     if useCorrection {
@@ -135,16 +184,27 @@ struct TripEditView: View {
                         TextField("Reason / source (required)", text: $trip.adjustmentReason, axis: .vertical)
                     }
                 } header: { Text("Mileage") } footer: {
-                    Text("The GPS measurement and original route are kept. Enter the full trip total, not just the missing miles.")
+                    Text("The original GPS measurement and route are kept. Enter the full trip total and the source you used to verify it.")
                 }
+                .listRowBackground(Color.mileageCard)
                 if !trip.issues.isEmpty {
                     Section {
                         Toggle("I reviewed the route and mileage", isOn: $trip.reviewed)
                     } footer: { Text("Review does not reconstruct a missing route.") }
+                    .listRowBackground(Color.mileageCard)
                 }
-                if let error { Section { Text(error).foregroundStyle(.orange) } }
+                if let error {
+                    Section { Label(error, systemImage: "exclamationmark.circle").foregroundStyle(Color.mileageWarning) }
+                        .listRowBackground(Color.mileageWarningSurface)
+                }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color.mileageBackground)
+            .foregroundStyle(Color.mileagePrimary)
+            .tint(Color.mileageGreen)
+            .scrollDismissesKeyboard(.interactively)
             .navigationTitle("Edit trip").navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color.mileageBackground, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
@@ -167,5 +227,6 @@ struct TripEditView: View {
                 }
             }
         }
+        .preferredColorScheme(MileageAppearance(rawValue: appearance)?.colorScheme)
     }
 }
