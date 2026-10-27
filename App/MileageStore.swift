@@ -32,6 +32,32 @@ final class MileageStore: ObservableObject {
     }
 
     @discardableResult
+    func setActiveCategory(_ category: TripCategory) -> Bool {
+        guard !isReadOnly, let index = trips.firstIndex(where: \.isActive) else { return false }
+        guard trips[index].category != category else { return true }
+        var proposed = trips
+        proposed[index].category = category
+        return commit(proposed)
+    }
+
+    @discardableResult
+    func addManualTrip(category: TripCategory, purpose: String, startedAt: Date, endedAt: Date,
+                       miles: Double, reason: String) -> Bool {
+        guard !isReadOnly else { return false }
+        do {
+            let trip = try Trip.manual(category: category, purpose: purpose, startedAt: startedAt,
+                                       endedAt: endedAt, miles: miles, reason: reason)
+            var proposed = trips
+            proposed.append(trip)
+            proposed.sort { $0.startedAt > $1.startedAt }
+            return commit(proposed)
+        } catch {
+            storageError = error.localizedDescription
+            return false
+        }
+    }
+
+    @discardableResult
     func append(_ samples: [LocationSample]) -> Bool {
         guard let index = trips.firstIndex(where: \.isActive) else { return false }
         var proposed = trips

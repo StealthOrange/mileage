@@ -4,7 +4,9 @@ A personal iPhone mileage tracker with **Start/Stop recording that can continue 
 
 ## Included
 
-- Start and stop trips; Business and Personal categories, purpose and notes.
+- Start, pause, resume, and end drives; Business and Personal categories, purpose and notes.
+- Reference-based instrument dashboard, route maps, and System / Light / Dark appearance.
+- Verified manual trip entry and selected-month reports with CSV/PDF exports.
 - Background GPS configured using Apple's supported location background mode.
 - Local, atomic trip checkpoints, including while the device is locked after its first unlock.
 - Route maps, monthly business miles, searchable trip history, CSV exports and full JSON backups.
@@ -29,6 +31,8 @@ xcodebuild build -project Mileage.xcodeproj -scheme Mileage \
 ```
 
 The checked-in Xcode project opens directly without a generation tool. If adding/removing Swift source files, run `python3 scripts/generate_project.py` and commit the result. The generator uses Python's standard library. Signing choices made inside Xcode are local project changes; reapply them after regenerating.
+
+See [battery and background recording](docs/BATTERY.md) for the active-drive-only GPS policy, pause behavior, and physical-device energy checks.
 
 ## Before relying on a mileage total
 

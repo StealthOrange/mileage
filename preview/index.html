@@ -3,48 +3,33 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#F5F6F4">
-  <meta name="description" content="Try Mileage’s trip workflow in a local, simulated browser preview.">
-  <title>Mileage · Interactive preview</title>
+  <meta name="theme-color" content="#080D10">
+  <meta name="description" content="A private browser preview of Mileage. All GPS routes are simulated.">
+  <title>Mileage · Instrument preview</title>
   <script>
     try {
       const root = document.documentElement;
       const appearance = localStorage.getItem(root.dataset.appearanceKey);
       if (['system', 'light', 'dark'].includes(appearance)) root.dataset.theme = appearance;
-    } catch (_) { /* System appearance works when browser storage is unavailable. */ }
+    } catch (_) {}
   </script>
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="styles.css">
+  <script src="map.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
   <div class="preview-toolbar">
-    <p class="preview-context"><span class="dot"></span><span>Browser preview <span class="toolbar-divider">/</span> Simulated GPS</span></p>
-    <label class="appearance-control">Appearance
-      <select data-appearance-select aria-label="Appearance">
-        <option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option>
-      </select>
-    </label>
+    <p>Browser preview <span aria-hidden="true">·</span> Simulated GPS</p>
+    <div class="preview-actions">
+      <button class="preview-link" data-action="samples">Load sample trips</button>
+      <label class="preview-appearance"><span class="sr-only">Appearance</span><select data-appearance-select aria-label="Appearance"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+    </div>
   </div>
-  <div class="stage">
-    <aside class="intro" aria-label="Preview guide">
-      <div class="wordmark"><span class="brand-icon" data-icon="route"></span>Mileage <span class="beta-label">Personal beta</span></div>
-      <h2>A little less admin.<br>A little more road.</h2>
-      <p>Try the essentials of your personal mileage tracker.</p>
-      <ol class="steps">
-        <li><b>Start a trip</b><p>Choose a category and add a purpose.</p></li>
-        <li><b>Take a simulated drive</b><p>Miles advance at 10× speed.</p></li>
-        <li><b>Save and review</b><p>Edit details, correct mileage, and export records.</p></li>
-      </ol>
-      <div class="intro-actions"><button class="button secondary" data-action="samples">Load sample trips</button><button class="button plain" data-action="reset">Reset preview</button></div>
-      <p class="intro-note">Preview data stays in this browser. Real GPS and locked-screen tracking run in the native iPhone app.<br><a href="https://github.com/StealthOrange/mileage/pull/1" target="_blank" rel="noopener">View native app on GitHub ↗</a></p>
-    </aside>
-    <main class="phone" aria-label="Mileage app preview">
-      <div class="preview-banner">SIMULATED PREVIEW · NO REAL LOCATION TRACKING</div>
-      <div class="screen" id="screen"><div class="content" id="app"></div></div>
-      <div class="mobile-tools"><button class="button plain" data-action="samples">Load sample trips</button><button class="button plain" data-action="reset">Reset preview</button></div>
-    </main>
-  </div>
+  <main class="app-shell" aria-label="Mileage app preview">
+    <div class="screen" id="screen"><div id="app"></div></div>
+    <nav class="bottom-nav" id="navigation" aria-label="Main navigation"></nav>
+  </main>
   <dialog class="sheet" id="sheet" aria-labelledby="sheet-title"></dialog>
   <div class="toast" id="toast" role="status" hidden></div>
 </body>

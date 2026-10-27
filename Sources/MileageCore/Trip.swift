@@ -12,6 +12,21 @@ public enum RecordingIssue: String, Codable {
     case permissionChanged = "Location permission or precision changed"
     case storageFailure = "Recording stopped after a storage error"
     case insufficientGPS = "Not enough GPS points to measure the trip"
+    case userPaused = "Recording paused by user"
+}
+
+public enum ManualTripError: LocalizedError {
+    case invalidMiles
+    case invalidDates
+    case missingSource
+
+    public var errorDescription: String? {
+        switch self {
+        case .invalidMiles: return "Enter a valid mileage total of zero or more."
+        case .invalidDates: return "Choose a valid end time that is not before the start time."
+        case .missingSource: return "Explain the source of your mileage, such as your odometer."
+        }
+    }
 }
 
 public struct TripIssue: Codable, Equatable, Identifiable {
@@ -63,6 +78,27 @@ public struct Trip: Codable, Identifiable, Equatable {
         self.purpose = purpose
     }
 
+    /// A verified manual record keeps its entered total separate from the absent GPS measurement.
+    public static func manual(category: TripCategory, purpose: String, startedAt: Date, endedAt: Date,
+                              miles: Double, reason: String) throws -> Trip {
+        guard miles.isFinite, miles >= 0 else { throw ManualTripError.invalidMiles }
+        guard startedAt.timeIntervalSinceReferenceDate.isFinite,
+              endedAt.timeIntervalSinceReferenceDate.isFinite,
+              endedAt >= startedAt else { throw ManualTripError.invalidDates }
+        let source = reason.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !source.isEmpty else { throw ManualTripError.missingSource }
+
+        var trip = Trip(startedAt: startedAt, category: category,
+                        purpose: purpose.trimmingCharacters(in: .whitespacesAndNewlines))
+        trip.endedAt = endedAt
+        trip.adjustedMiles = miles
+        trip.adjustmentReason = source
+        trip.notes = "Manually entered trip. No GPS route recorded."
+        trip.issues = [TripIssue(date: endedAt, reason: .insufficientGPS)]
+        trip.reviewed = true
+        return trip
+    }
+
     public var isActive: Bool { endedAt == nil }
     public var gpsMiles: Double { gpsDistanceMeters / 1609.344 }
     public var miles: Double { adjustedMiles ?? gpsMiles }
@@ -82,7 +118,8 @@ public struct Trip: Codable, Identifiable, Equatable {
         guard isActive else { return }
         endedAt = max(date, max(samples.last?.timestamp ?? startedAt, startedAt))
         if samples.count < 2 { interrupt(.insufficientGPS, at: endedAt!) }
-        else if endedAt!.timeIntervalSince(lastFixAt ?? lastReliableFix?.timestamp ?? samples.last!.timestamp) > 60 {
+        else if !(needsNewSegment && issues.last?.reason == .userPaused),
+                endedAt!.timeIntervalSince(lastFixAt ?? lastReliableFix?.timestamp ?? samples.last!.timestamp) > 60 {
             interrupt(.gpsGap, at: endedAt!)
         }
     }

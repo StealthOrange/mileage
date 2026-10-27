@@ -3,30 +3,32 @@ import CoreGraphics
 
 enum MileageTokens {
     enum Light {
-        static let background = 0xF5F6F4
+        static let background = 0xF6F8F8
         static let surface = 0xFFFFFF
-        static let surfaceSecondary = 0xEDF0EC
-        static let text = 0x15201A
-        static let textSecondary = 0x5B6760
-        static let border = 0xDEE4DD
-        static let accent = 0x15704A
-        static let onAccent = 0xFFFFFF
+        static let surfaceSecondary = 0xECEFF1
+        static let text = 0x0B1014
+        static let textSecondary = 0x58616C
+        static let border = 0xDAE0E5
+        static let accent = 0xB7FF4C
+        static let onAccent = 0x0A1005
         static let warning = 0x8A4D09
         static let warningSurface = 0xFFF3DF
         static let danger = 0xB5322C
+        static let accentText = 0x355600
     }
     enum Dark {
-        static let background = 0x101413
-        static let surface = 0x181E1B
-        static let surfaceSecondary = 0x202822
-        static let text = 0xEDF3EE
-        static let textSecondary = 0xA5B1A9
-        static let border = 0x303B33
-        static let accent = 0x77D9A7
-        static let onAccent = 0x0C1B12
+        static let background = 0x080D10
+        static let surface = 0x0D1419
+        static let surfaceSecondary = 0x141D24
+        static let text = 0xF3F5F7
+        static let textSecondary = 0xA5AFBB
+        static let border = 0x26313B
+        static let accent = 0xB7FF4C
+        static let onAccent = 0x0A1005
         static let warning = 0xF4BE75
         static let warningSurface = 0x35291B
         static let danger = 0xFF9C93
+        static let accentText = 0xB7FF4C
     }
     enum Space {
         static let xs: CGFloat = 4
@@ -37,8 +39,8 @@ enum MileageTokens {
         static let xxl: CGFloat = 32
     }
     enum Radius {
-        static let control: CGFloat = 12
-        static let card: CGFloat = 20
+        static let control: CGFloat = 24
+        static let card: CGFloat = 16
     }
     enum Typography {
         static let title: CGFloat = 32

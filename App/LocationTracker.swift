@@ -5,6 +5,7 @@ import Combine
 @MainActor
 final class LocationTracker: NSObject, ObservableObject, @preconcurrency CLLocationManagerDelegate {
     @Published private(set) var isRecording = false
+    @Published private(set) var isPaused = false
     @Published private(set) var authorization: CLAuthorizationStatus = .notDetermined
     @Published private(set) var hasPreciseLocation = false
     @Published private(set) var lastFixAt: Date?
@@ -20,16 +21,32 @@ final class LocationTracker: NSObject, ObservableObject, @preconcurrency CLLocat
         super.init()
         // Created on the main actor; Core Location delivers delegates on this run loop.
         manager.delegate = self
+        // Route measurement needs useful road geometry. Avoid the additional
+        // navigation sensor work of kCLLocationAccuracyBestForNavigation.
         manager.desiredAccuracy = kCLLocationAccuracyBest
+        // Reliable stationary fixes are heartbeats for the recorder's gap
+        // detection. A distance filter would hide a long traffic-light stop.
         manager.distanceFilter = kCLDistanceFilterNone
         manager.activityType = .automotiveNavigation
+        // With When In Use authorization, Core Location's automatic pause can
+        // end background delivery until the app is opened again. Explicit
+        // Pause and End drive stop the hardware without losing that contract.
         manager.pausesLocationUpdatesAutomatically = false
         manager.showsBackgroundLocationIndicator = true
+        manager.allowsBackgroundLocationUpdates = false
         refreshStatus()
     }
 
     func start(category: TripCategory, purpose: String) { begin(.new(category, purpose)) }
     func resume() { begin(.resume) }
+
+    func pause() {
+        guard isRecording else { return }
+        stopHardware()
+        isPaused = true
+        if store.interrupt(.userPaused) { message = nil }
+        else { message = store.storageError }
+    }
 
     func stop() {
         stopHardware()
@@ -84,11 +101,16 @@ final class LocationTracker: NSObject, ObservableObject, @preconcurrency CLLocat
             switch intent {
             case let .new(category, purpose): saved = store.start(category: category, purpose: purpose)
             case .resume:
-                saved = store.activeTrip != nil && store.interrupt(.gpsGap)
+                // Pause, app restart, and permission changes already break the
+                // route. Preserve that reason rather than inventing GPS loss.
+                if let trip = store.activeTrip {
+                    saved = trip.needsNewSegment || store.interrupt(.gpsGap)
+                } else { saved = false }
             }
             guard saved else { message = store.storageError; return }
             message = nil
             lastFixAt = nil
+            isPaused = false
             // Start in the foreground. This keeps an explicitly started trip
             // running under When In Use authorization with iOS's blue indicator.
             manager.allowsBackgroundLocationUpdates = true
@@ -100,10 +122,11 @@ final class LocationTracker: NSObject, ObservableObject, @preconcurrency CLLocat
     }
 
     private func stopHardware() {
+        isRecording = false
+        isPaused = false
+        pendingIntent = nil
         manager.stopUpdatingLocation()
         manager.allowsBackgroundLocationUpdates = false
-        isRecording = false
-        pendingIntent = nil
     }
 
     private func pauseForPermissionChange() {

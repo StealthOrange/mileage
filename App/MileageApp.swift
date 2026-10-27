@@ -15,10 +15,10 @@ struct MileageApp: App {
 
     var body: some Scene {
         WindowGroup {
-            DashboardView()
+            MileageRootView()
                 .environmentObject(store)
                 .environmentObject(tracker)
-                .tint(.mileageGreen)
+                .tint(.mileageAccentText)
                 .foregroundStyle(Color.mileagePrimary)
                 .preferredColorScheme((MileageAppearance(rawValue: appearance) ?? .system).colorScheme)
                 .onChange(of: scenePhase) { _, phase in

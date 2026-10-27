@@ -83,4 +83,74 @@ final class PersistenceAndCSVTests: XCTestCase {
         XCTAssertTrue(csv.contains("\"Needs review\""))
         XCTAssertTrue(csv.contains("Not enough GPS points"))
     }
+
+    func testManualTripPersistsVerifiedTotalWithoutInventingGPS() throws {
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let trip = try Trip.manual(category: .business, purpose: "  Client visit  ", startedAt: start,
+                                   endedAt: start.addingTimeInterval(1800), miles: 18.7,
+                                   reason: "  Odometer: 12000.0 to 12018.7  ")
+        let active = Trip(startedAt: start.addingTimeInterval(3600), category: .personal)
+        try repository.save([active, trip])
+
+        let saved = try repository.load()
+        XCTAssertEqual(saved, [active, trip])
+        XCTAssertFalse(trip.isActive)
+        XCTAssertEqual(trip.miles, 18.7)
+        XCTAssertEqual(trip.gpsMiles, 0)
+        XCTAssertTrue(trip.samples.isEmpty)
+        XCTAssertEqual(trip.routeSegments, [])
+        XCTAssertEqual(trip.purpose, "Client visit")
+        XCTAssertEqual(trip.adjustmentReason, "Odometer: 12000.0 to 12018.7")
+        XCTAssertTrue(trip.reviewed)
+        XCTAssertFalse(trip.needsReview)
+        XCTAssertTrue(trip.notes.contains("No GPS route recorded"))
+
+        let csv = TripCSV.export(saved)
+        XCTAssertTrue(csv.contains("\"18.700\",\"0.000\",\"18.700\""))
+        XCTAssertTrue(csv.contains("\"Reviewed\""))
+        XCTAssertTrue(csv.contains("Odometer: 12000.0 to 12018.7"))
+    }
+
+    func testManualTripRejectsInvalidTotalsDatesAndMissingSource() throws {
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        for miles in [-1, Double.nan, Double.infinity] {
+            XCTAssertThrowsError(try Trip.manual(category: .personal, purpose: "", startedAt: start,
+                                                 endedAt: start, miles: miles, reason: "Odometer"))
+        }
+        XCTAssertThrowsError(try Trip.manual(category: .personal, purpose: "", startedAt: start,
+                                             endedAt: start.addingTimeInterval(-1), miles: 1, reason: "Odometer"))
+        XCTAssertThrowsError(try Trip.manual(category: .personal, purpose: "", startedAt: start,
+                                             endedAt: Date(timeIntervalSinceReferenceDate: .infinity),
+                                             miles: 1, reason: "Odometer"))
+        XCTAssertThrowsError(try Trip.manual(category: .personal, purpose: "", startedAt: start,
+                                             endedAt: start, miles: 1, reason: " \n "))
+        XCTAssertNoThrow(try Trip.manual(category: .personal, purpose: "", startedAt: start,
+                                         endedAt: start, miles: 0, reason: "Odometer unchanged"))
+    }
+
+    func testUserPauseIssueSurvivesAnArchiveRoundTrip() throws {
+        var trip = Trip(category: .business)
+        trip.interrupt(.userPaused)
+        try repository.save([trip])
+        let saved = try XCTUnwrap(repository.load().first)
+        XCTAssertEqual(saved.issues.first?.reason, .userPaused)
+        XCTAssertTrue(saved.needsReview)
+        XCTAssertTrue(saved.needsNewSegment)
+    }
+
+    func testFinishingAnIntentionallyPausedTripDoesNotInventGPSLoss() {
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        var trip = Trip(startedAt: start, category: .business)
+        RouteRecorder.append(LocationSample(latitude: 29.7, longitude: -95.3, accuracy: 5,
+                                             timestamp: start), to: &trip)
+        let lastFix = start.addingTimeInterval(10)
+        RouteRecorder.append(LocationSample(latitude: 29.7005, longitude: -95.3, accuracy: 5,
+                                             timestamp: lastFix), to: &trip)
+        trip.interrupt(.userPaused, at: start.addingTimeInterval(20))
+        trip.finish(at: start.addingTimeInterval(300), lastFixAt: lastFix)
+
+        XCTAssertEqual(trip.issues.map(\.reason), [.userPaused])
+        XCTAssertFalse(trip.isActive)
+        XCTAssertTrue(trip.needsReview)
+    }
 }
