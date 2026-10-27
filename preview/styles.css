@@ -925,7 +925,7 @@ textarea.input {
 }
 
 .detail-map {
-  height: 210px;
+  aspect-ratio: 1.9;
   border: 1px solid var(--line);
   border-radius: 16px;
   overflow: hidden
